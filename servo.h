@@ -38,7 +38,7 @@ class Servo
 private:
     std::string _pin;
     bool _attached;
-    int _lastValue;
+    double _lastValue;
 
 /*****************************************
  *
@@ -65,7 +65,7 @@ Define files to match sysfs tree:
     std::ofstream _sysfsfid_period;
     std::ofstream _sysfsfid_polarity;
     std::ofstream _sysfsfid_run;
-    std::ofstream _sysfsfid_request;
+    std::fstream _sysfsfid_request;
 
 	int _duty;
 	static const int _period = PWM_FRECUENCY;

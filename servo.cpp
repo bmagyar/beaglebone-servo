@@ -14,29 +14,39 @@ void Servo::attach(const std::string& pin)
     std::string filename = pinToFile(pin); // should throw an exception when something's wrong with the pin name
 
     // check if the pwm device is not used by someone else
-	std::stringstream sysfsfile_request;
-	_sysfsfid_request.open(sysfsfile_request.str().c_str());
-	sysfsfile_request << SYSFS_EHRPWM_PREFIX << filename << "/" << SYSFS_EHRPWM_REQUEST;
-    int req_status;
-    sysfsfile_request >> req_status;
-//    if(req_status != 0)
-//        throw std::exception("PWM device not available at this time.");
+    std::stringstream sysfsfile_request;
+    sysfsfile_request << SYSFS_EHRPWM_PREFIX << filename << "/" << SYSFS_EHRPWM_REQUEST;
+    std::ifstream req_file(sysfsfile_request.str().c_str());
+    std::string req_status;
+    std::getline(req_file, req_status);
+    std::cout << "req status: " << req_status << std::endl;
+    if(req_status.find("free") == std::string::npos)
+    {
+        //throw std::exception();
+	std::cerr << "PWM device not available at this time." << std::endl;
+        _attached = false;
+    } 
+    else 
+    {
+        _attached = true; 
+    }
     
     // if everything is okay we can move forward with opening the other files 
     std::stringstream sysfsfile_duty;
-	std::stringstream sysfsfile_period;
-	std::stringstream sysfsfile_polarity;
-	std::stringstream sysfsfile_run;
+    std::stringstream sysfsfile_period;
+    std::stringstream sysfsfile_polarity;
+    std::stringstream sysfsfile_run;
 
-	sysfsfile_duty << SYSFS_EHRPWM_PREFIX << filename << "/" << SYSFS_EHRPWM_DUTY;
-	sysfsfile_period << SYSFS_EHRPWM_PREFIX << filename << "/" << SYSFS_EHRPWM_PERIOD;
-	sysfsfile_polarity << SYSFS_EHRPWM_PREFIX << filename << "/" << SYSFS_EHRPWM_POLARITY;
-	sysfsfile_run << SYSFS_EHRPWM_PREFIX << filename << "/" << SYSFS_EHRPWM_RUN;
+    sysfsfile_duty << SYSFS_EHRPWM_PREFIX << filename << "/" << SYSFS_EHRPWM_DUTY;
+    sysfsfile_period << SYSFS_EHRPWM_PREFIX << filename << "/" << SYSFS_EHRPWM_PERIOD;
+    sysfsfile_polarity << SYSFS_EHRPWM_PREFIX << filename << "/" << SYSFS_EHRPWM_POLARITY;
+    sysfsfile_run << SYSFS_EHRPWM_PREFIX << filename << "/" << SYSFS_EHRPWM_RUN;
 
-	_sysfsfid_duty.open(sysfsfile_duty.str().c_str());
-	_sysfsfid_period.open(sysfsfile_period.str().c_str());
-	_sysfsfid_polarity.open(sysfsfile_polarity.str().c_str());
-	_sysfsfid_run.open(sysfsfile_run.str().c_str());
+    _sysfsfid_duty.open(sysfsfile_duty.str().c_str());
+    _sysfsfid_period.open(sysfsfile_period.str().c_str());
+    _sysfsfid_polarity.open(sysfsfile_polarity.str().c_str());
+    _sysfsfid_run.open(sysfsfile_run.str().c_str());
+    _sysfsfid_request.open(sysfsfile_request.str().c_str());
     
 
 
@@ -50,25 +60,45 @@ void Servo::attach(const std::string& pin)
     _sysfsfid_period.close();
 
     _pin = pin;
-    _attached = true;
 }
 
 void Servo::write(int value)
 {
-    _duty = MIN_DUTY_NS + value * DEGREE_TO_NS;
-    _lastValue = value;
-    _sysfsfid_duty << value << std::endl;
+    if(_attached)
+    {
+        _duty = MIN_DUTY_NS + value * DEGREE_TO_NS;
+        _lastValue = value;
+        _sysfsfid_duty << value << std::endl;
+    }
+    else 
+    {
+        std::cerr << "Servo object not attached to pin!" << std::endl;
+    }
 }
 
 void Servo::writeMicroseconds(int value)
 {
-    _sysfsfid_duty << value << "000" << std::endl; // micro -> nano
-    _lastValue = value*1000;
+    if(_attached)
+    {
+        _sysfsfid_duty << value << "000" << std::endl; // micro -> nano
+        _lastValue = value*1000;
+    }
+    else 
+    {
+        std::cerr << "Servo object not attached to pin!" << std::endl;
+    }
 }
 
 int Servo::read() const
 {
-    return _lastValue;
+    if(_attached)
+    {
+        return _lastValue;
+    }
+    else 
+    {
+        std::cerr << "Servo object not attached to pin!" << std::endl;
+    }
 }
 
 bool Servo::attached() const
@@ -78,15 +108,29 @@ bool Servo::attached() const
 
 void Servo::stop()
 {
-	_sysfsfid_run << "0" << std::endl;
-    _run = 0;
+    if(_attached)
+    {
+        _sysfsfid_run << "0" << std::endl;
+        _run = 0;
+    }
+    else 
+    {
+        std::cerr << "Servo object not attached to pin!" << std::endl;
+    }
 }
 
 void Servo::detach()
 {
-	_sysfsfid_run << "0" << std::endl;
-	_sysfsfid_request << "0" << std::endl;
-    _attached = false;
+    if(_attached)
+    {
+        _sysfsfid_run << "0" << std::endl;
+        _sysfsfid_request << "0" << std::endl;
+        _attached = false;
+    }
+    else 
+    {
+        std::cerr << "Servo object not attached to pin!" << std::endl;
+    }
 }
 
 std::string Servo::toString() const
@@ -123,7 +167,14 @@ void Servo::setPolarity(int value)
 
 Servo::~Servo()
 {
-    this->detach();
+    if(_attached)
+    {
+        this->detach();
+    }
+    else 
+    {
+        std::cerr << "Servo object not attached to pin!" << std::endl;
+    }
 }
 
 std::string Servo::pinToFile(const std::string& pin) 
@@ -145,6 +196,7 @@ std::string Servo::pinToFile(const std::string& pin)
     else if(pin == "P9_28")
         return "ecap.2";
     else 
-//        throw std::exception("Invalid pin name");
+//        throw std::exception();
+        std::cerr << "Invalid pin name" << std::endl;
         ;
 }
