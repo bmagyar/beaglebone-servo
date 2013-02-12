@@ -63,14 +63,19 @@ Define files to match sysfs tree:
 
     std::ofstream _sysfsfid_duty;
     std::ofstream _sysfsfid_period;
-    std::ofstream _sysfsfid_polarity;
+    //std::ofstream _sysfsfid_polarity;
     std::ofstream _sysfsfid_run;
     std::fstream _sysfsfid_request;
 
-	int _duty;
-	static const int _period = PWM_FRECUENCY;
-	int _polarity;
-	int _run;
+    std::string _filename_request;
+    std::string _filename_duty;
+    std::string _filename_period;
+    //std::string _filename_polarity;
+    std::string _filename_run;
+    int _duty;
+    static const int _PERIOD = PWM_FRECUENCY;
+    int _polarity;
+    int _run;
    
     static std::string pinToFile(const std::string& pin); 
      
@@ -88,9 +93,11 @@ public:
 
     std::string toString() const;
 
-    //void setDuty(int value);
-    //void setPeriod(int value);
-    //void setPolarity(int value);
+private:
+    void set_request(const int val); 
+    void set_duty(const int val); 
+    void set_period(const int val); 
+    void set_run(const int val); 
 };
 
 #endif 

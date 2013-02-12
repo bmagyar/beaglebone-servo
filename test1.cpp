@@ -8,6 +8,12 @@ int main(int argc, char** argv)
     Servo servo;
     servo.attach("P9_14");
 
+    for(int i=0; i<3; ++i)
+    {
+        std::cout << i << std::endl;
+        sleep(1);
+    }
+
     std::cout << "To middle" << std::endl;
     servo.writeMicroseconds(1500); //to middle
     sleep(1);
@@ -22,18 +28,24 @@ int main(int argc, char** argv)
     //The value in microseconds can change between servos. You can use this function to obtain the max and min values.
     // Next, you can use this values to fix the servo class to your own servos (if you need it)
 
+
+
+//Angle from 0 to 180 degrees
     for(int i=0; i<180; ++i)
-    {    
-    //Angle from 0 to 180 degrees
+    {   
+        std::cout << i << ","; 
         servo.write(i);
-        sleep(0.02);
+        usleep(200000);
     }
+    std::cout << std::endl;
     
     for(int i=180; i<0; --i)
     {    
+        std::cout << i << ","; 
         servo.write(i);
-        sleep(0.02);
+        usleep(200000);
     }
+    std::cout << std::endl;
 
     servo.detach();
 

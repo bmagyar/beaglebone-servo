@@ -39,25 +39,19 @@ void Servo::attach(const std::string& pin)
 
     sysfsfile_duty << SYSFS_EHRPWM_PREFIX << filename << "/" << SYSFS_EHRPWM_DUTY;
     sysfsfile_period << SYSFS_EHRPWM_PREFIX << filename << "/" << SYSFS_EHRPWM_PERIOD;
-    sysfsfile_polarity << SYSFS_EHRPWM_PREFIX << filename << "/" << SYSFS_EHRPWM_POLARITY;
     sysfsfile_run << SYSFS_EHRPWM_PREFIX << filename << "/" << SYSFS_EHRPWM_RUN;
 
-    _sysfsfid_duty.open(sysfsfile_duty.str().c_str());
-    _sysfsfid_period.open(sysfsfile_period.str().c_str());
-    _sysfsfid_polarity.open(sysfsfile_polarity.str().c_str());
-    _sysfsfid_run.open(sysfsfile_run.str().c_str());
-    _sysfsfid_request.open(sysfsfile_request.str().c_str());
-    
+    _filename_request = sysfsfile_request.str();
+    _filename_duty = sysfsfile_duty.str();
+    _filename_period = sysfsfile_period.str();
+    _filename_run = sysfsfile_run.str();
 
 
-    _sysfsfid_request << "1" << std::endl;
-    _sysfsfid_run << "0" << std::endl;
-    _sysfsfid_period << _period << std::endl;
-    _sysfsfid_duty << MIN_DUTY_NS << std::endl; // initialize to 0 degree
-    _sysfsfid_run << "1" << std::endl;
-
-    // push the fixed period setting and close the file
-    _sysfsfid_period.close();
+    set_request(1);    
+    set_run(0);
+    set_period(_PERIOD);
+    set_duty(MIN_DUTY_NS); // initialize to 0 degree
+    set_run(1);
 
     _pin = pin;
 }
@@ -68,7 +62,7 @@ void Servo::write(int value)
     {
         _duty = MIN_DUTY_NS + value * DEGREE_TO_NS;
         _lastValue = value;
-        _sysfsfid_duty << value << std::endl;
+       set_duty(value);
     }
     else 
     {
@@ -80,7 +74,7 @@ void Servo::writeMicroseconds(int value)
 {
     if(_attached)
     {
-        _sysfsfid_duty << value << "000" << std::endl; // micro -> nano
+        set_duty(value*1000); // micro -> nano
         _lastValue = value*1000;
     }
     else 
@@ -110,7 +104,7 @@ void Servo::stop()
 {
     if(_attached)
     {
-        _sysfsfid_run << "0" << std::endl;
+        set_run(0);
         _run = 0;
     }
     else 
@@ -123,8 +117,8 @@ void Servo::detach()
 {
     if(_attached)
     {
-        _sysfsfid_run << "0" << std::endl;
-        _sysfsfid_request << "0" << std::endl;
+        set_run(0);
+        set_request(0);
         _attached = false;
     }
     else 
@@ -138,42 +132,60 @@ std::string Servo::toString() const
     std::stringstream ss;
 
     ss << "Attached: " << _attached << ", pin: " << _pin 
-       << ", period: " << _period << ", duty: " << _duty 
+       << ", period: " << _PERIOD << ", duty: " << _duty 
        << "run: " << _run
        ;
 
     return ss.str();
 }
 
-/*
-void Servo::setDuty(int value)
+
+void Servo::set_request(const int val) 
 {
-    _duty = value;
-    _sysfsfid_duty << value << std::endl;
+    if(_attached)
+    {
+        _sysfsfid_request.open(_filename_request.c_str());
+        _sysfsfid_request << val << std::endl;
+        _sysfsfid_request.close();
+    }
 }
 
-void Servo::setPeriod(int value)
+void Servo::set_duty(const int val) 
 {
-    _period = value;
-    _sysfsfid_period << value << std::endl;
+    if(_attached)
+    {
+        _sysfsfid_duty.open(_filename_duty.c_str());
+        _sysfsfid_duty << val << std::endl; 
+        _sysfsfid_duty.close();
+    }
 }
 
-void Servo::setPolarity(int value)
+void Servo::set_period(const int val)
 {
-    _polarity = value;
-    _sysfsfid_polarity << value << std::endl;
+    if(_attached)
+    {
+        _sysfsfid_period.open(_filename_period.c_str());
+        _sysfsfid_period << val << std::endl;
+        _sysfsfid_period.close();
+    }
 }
-*/
+
+void Servo::set_run(const int val)
+{
+    if(_attached)
+    {
+        _sysfsfid_run.open(_filename_run.c_str());
+        _sysfsfid_run << val << std::endl;
+        _sysfsfid_run.close();
+    }
+}
+
 
 Servo::~Servo()
 {
     if(_attached)
     {
         this->detach();
-    }
-    else 
-    {
-        std::cerr << "Servo object not attached to pin!" << std::endl;
     }
 }
 
