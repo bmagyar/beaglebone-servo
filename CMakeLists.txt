@@ -1,7 +1,9 @@
 cmake_minimum_required (VERSION 2.6)
-project (beaglebone-servo)
+project (beaglebone_servo)
 
-add_library(servo servo.cpp)
+include_directories("./include")
 
-add_executable(test1 test1.cpp)
-target_link_libraries(test1 servo)
+add_library(${PROJECT_NAME} src/servo.cpp)
+
+add_executable(test1 src/test1.cpp)
+target_link_libraries(test1 ${PROJECT_NAME})
