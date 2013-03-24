@@ -33,19 +33,17 @@ int main(int argc, char** argv)
 //Angle from 0 to 180 degrees
     for(int i=0; i<180; ++i)
     {   
-        std::cout << i << ","; 
+        std::cout << i << std::endl; 
         servo.write(i);
         usleep(200000);
     }
-    std::cout << std::endl;
     
-    for(int i=180; i<0; --i)
+    for(int i=180; i>0; --i)
     {    
-        std::cout << i << ","; 
+        std::cout << i << std::endl; 
         servo.write(i);
         usleep(200000);
     }
-    std::cout << std::endl;
 
     servo.detach();
 
